@@ -104,97 +104,6 @@ return result;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void process_data(uint32_t fl_storage, bool twr)
-{
-    while(!(USART2->SR & USART_SR_RXNE));
-    HAL_UART_Receive(&huart2, (uint8_t*)rx_buffer, sizeof(rx_buffer), 1000);
-    HAL_Delay(1000);
-    uint8_t str1[20];
-    char* end;
-
-
-    //dig = strtok((char*)rx_buffer, " ");
-
-    //firstDigit = strtok((char*)rx_buffer, " ");
-
-    /*std::string s = (char*)rx_buffer;
-    std::string delimiter = " ";
-    std::string firstDigitStr = s.substr(0, s.find(delimiter)); // token is "scott"
-    strcpy(firstDigit, firstDigitStr.c_str());*/
-/*
-    HAL_Delay(1000);
-    while(!(USART2->SR & USART_SR_TC));
-    HAL_UART_Transmit(&huart2, (uint64_t*)rx_buffer, sizeof(rx_buffer), 1000);
-    HAL_Delay(1000);
-*/
-    char *space = strstr(rx_buffer, " ");
-    int digitLen = space - rx_buffer;
-    int otherStringLen = strlen(rx_buffer) - digitLen - 1;
-    snprintf((char*)firstDigit, digitLen + 1, rx_buffer);
-
-    char rest_of_rx_buffer[50];
-    //snprintf(rest_of_rx_buffer, otherStringLen + 1, &space[1]);
-    strncpy(rest_of_rx_buffer, &space[1], otherStringLen + 1);
-
-    space = strstr(rest_of_rx_buffer, " ");
-    digitLen = space - rest_of_rx_buffer;
-    otherStringLen = strlen(rest_of_rx_buffer) - digitLen - 1;
-    snprintf((char*)secondDigit, digitLen + 1, rest_of_rx_buffer);
-
-    strncpy((char*)thirdDigit, &space[1], otherStringLen + 1);
-
-    //firstDigit[firstDigitLen] = '\0';
-
-    //char buffer2[50];
-    //sprintf(buffer2, "%lu", rx_buffer );
-
-    HAL_Delay(1000);
-    while(!(USART2->SR & USART_SR_TC));
-    HAL_UART_Transmit(&huart2, firstDigit, sizeof(firstDigit), 1000);
-    HAL_Delay(1000);
-
-    HAL_Delay(1000);
-    while(!(USART2->SR & USART_SR_TC));
-    HAL_UART_Transmit(&huart2, secondDigit, sizeof(secondDigit), 1000);
-    HAL_Delay(1000);
-
-    HAL_Delay(1000);
-    while(!(USART2->SR & USART_SR_TC));
-    HAL_UART_Transmit(&huart2, thirdDigit, sizeof(thirdDigit), 1000);
-    HAL_Delay(1000);
-
-
-    /*a = strtoull((char*)rx_buffer,&end,10);
-
-    if (twr == true){
-        convert_rx_buff += llabs(a - rx_buffer1);
-        rx_buffer1 = a;
-        strcpy((char*)str1,uint64_to_string(convert_rx_buff));
-    }
-    else{
-        //rx_buff = llabs(a);
-        strcpy((char*)str1,uint64_to_string(a));
-    }
-    /*convert_rx_buff += llabs(a - rx_buffer1);
-//	  convert_rx_buff += 2345678901;
-    rx_buffer1 = a;
-*/
-
-    memset(rx_buffer, 0, sizeof(rx_buffer));
-    asprintf((char*)rx_buffer, "%s", (char*)str1);
-    save_to_flash((uint8_t*)rx_buffer, fl_storage);
-    memset(rx_buffer, 0, sizeof(rx_buffer));
-    char read_data[20];
-    memset(read_data, 0, sizeof(read_data));
-    /*read_flash((uint8_t*)read_data, fl_storage);
-    HAL_Delay(100);
-    while(!(USART2->SR & USART_SR_TC));
-    HAL_UART_Transmit(&huart2, (uint8_t*)read_data,20 ,300);
-    HAL_Delay(100);*/
-}
-
-
-
 void save_to_flash(uint8_t *data, uint32_t fl_storage)
 {
     volatile uint32_t data_to_FLASH[(strlen((char*)data)/4)	+ (int)((strlen((char*)data) % 4) != 0)];
@@ -272,7 +181,37 @@ int64_t GetDifference(uint64_t first, uint64_t second) {
 
 
 
+void process_data(char* temp_buffer, uint32_t fl_storage, bool twr)
+{
 
+    HAL_Delay(1000);
+    while(!(USART2->SR & USART_SR_TC));
+    HAL_UART_Transmit(&huart2, (uint8_t*)temp_buffer, 50, 1000);
+    HAL_Delay(1000);
+
+    uint8_t str1[20];
+    char* end;
+    a = strtoull((char*)temp_buffer,&end,10);
+    if (twr == true){
+        convert_rx_buff += llabs(a - rx_buffer1);
+        rx_buffer1 = a;
+        strcpy((char*)str1, uint64_to_string(convert_rx_buff));
+    }
+    else{
+        strcpy((char*)str1, uint64_to_string(a));
+    }
+    memset(temp_buffer, 0, sizeof(temp_buffer));
+    asprintf(temp_buffer, "%s", (char*)str1);
+    save_to_flash((uint8_t*)temp_buffer, fl_storage);
+    memset(temp_buffer, 0, sizeof(temp_buffer));
+    char read_data[20];
+    memset(read_data, 0, sizeof(read_data));
+    read_flash((uint8_t*)read_data, fl_storage);
+    HAL_Delay(1000);
+    while(!(USART2->SR & USART_SR_TC));
+    HAL_UART_Transmit(&huart2, (uint8_t*)read_data, 50, 1000);
+    HAL_Delay(1000);
+}
 
 
 /* USER CODE END 0 */
@@ -344,8 +283,98 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    twr = true;
-    process_data((uint64_t)FLASH_STORAGE_TWR, twr);
+      while(!(USART2->SR & USART_SR_RXNE));
+      HAL_UART_Receive(&huart2, (uint8_t*)rx_buffer, sizeof(rx_buffer), 1000);
+      HAL_Delay(1000);
+
+
+      //dig = strtok((char*)rx_buffer, " ");
+
+      //firstDigit = strtok((char*)rx_buffer, " ");
+
+      /*std::string s = (char*)rx_buffer;
+      std::string delimiter = " ";
+      std::string firstDigitStr = s.substr(0, s.find(delimiter)); // token is "scott"
+      strcpy(firstDigit, firstDigitStr.c_str());*/
+  /*
+      HAL_Delay(1000);
+      while(!(USART2->SR & USART_SR_TC));
+      HAL_UART_Transmit(&huart2, (uint64_t*)rx_buffer, sizeof(rx_buffer), 1000);
+      HAL_Delay(1000);
+  */
+      char *space = strstr(rx_buffer, " ");
+      int digitLen = space - rx_buffer;
+      int otherStringLen = strlen(rx_buffer) - digitLen - 1;
+      snprintf((char*)firstDigit, digitLen + 1, rx_buffer);
+
+
+      //save first digit
+      bool twr = true;
+      process_data((char*)firstDigit, (uint64_t)FLASH_STORAGE_TWR, twr);
+
+
+      char rest_of_rx_buffer[50];
+      //snprintf(rest_of_rx_buffer, otherStringLen + 1, &space[1]);
+      strncpy(rest_of_rx_buffer, &space[1], otherStringLen + 1);
+
+      space = strstr(rest_of_rx_buffer, " ");
+      digitLen = space - rest_of_rx_buffer;
+      otherStringLen = strlen(rest_of_rx_buffer) - digitLen - 1;
+      snprintf((char*)secondDigit, digitLen + 1, rest_of_rx_buffer);
+
+
+      //save second digit
+      twr = false;
+      //process_data((char*)secondDigit, (uint64_t)FLASH_STORAGE_FREE_BYTES, twr);
+
+
+      strncpy((char*)thirdDigit, &space[1], otherStringLen + 1);
+
+
+      //save third digit
+      //process_data((char*)thirdDigit, (uint64_t)FLASH_STORAGE_FREE_BYTES, twr);
+
+      //firstDigit[firstDigitLen] = '\0';
+
+      //char buffer2[50];
+      //sprintf(buffer2, "%lu", rx_buffer );
+/*
+      HAL_Delay(1000);
+      while(!(USART2->SR & USART_SR_TC));
+      HAL_UART_Transmit(&huart2, firstDigit, sizeof(firstDigit), 1000);
+      HAL_Delay(1000);
+
+      HAL_Delay(1000);
+      while(!(USART2->SR & USART_SR_TC));
+      HAL_UART_Transmit(&huart2, secondDigit, sizeof(secondDigit), 1000);
+      HAL_Delay(1000);
+
+      HAL_Delay(1000);
+      while(!(USART2->SR & USART_SR_TC));
+      HAL_UART_Transmit(&huart2, thirdDigit, sizeof(thirdDigit), 1000);
+      HAL_Delay(1000);
+*/
+
+
+
+      /*convert_rx_buff += llabs(a - rx_buffer1);
+  //	  convert_rx_buff += 2345678901;
+      rx_buffer1 = a;
+  */
+
+      /*
+      memset(rx_buffer, 0, sizeof(rx_buffer));
+      asprintf((char*)rx_buffer, "%s", (char*)str1);
+      save_to_flash((uint8_t*)rx_buffer, fl_storage);
+      memset(rx_buffer, 0, sizeof(rx_buffer));
+      char read_data[20];
+      memset(read_data, 0, sizeof(read_data));
+      read_flash((uint8_t*)read_data, fl_storage);
+      HAL_Delay(100);
+      while(!(USART2->SR & USART_SR_TC));
+      HAL_UART_Transmit(&huart2, (uint8_t*)read_data,20 ,300);
+      HAL_Delay(100);*/
+
     //twr = false;
     //process_data((uint64_t)FLASH_STORAGE_FREE_BYTES, twr);
     //process_data((uint64_t)FLASH_STORAGE_TOTAL_BYTES, twr);
