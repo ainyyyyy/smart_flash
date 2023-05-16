@@ -2,6 +2,7 @@
 #include <windows.h>
 #include "tchar.h"
 
+using namespace std;
 
 int send_to_stm2(HANDLE hSerial, std::string strr){
 
@@ -33,11 +34,45 @@ int send_to_stm2(HANDLE hSerial, std::string strr){
     DWORD dwSize = sizeof(buffer);   // размер этой строки
     DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
     DWORD dwBytesRead;
+
+/*
+    uint8_t firstDigit[50], secondDigit[50];
+
+
+    char *space = strstr(buffer, " ");
+    int digitLen = space - buffer;
+    int otherStringLen = strlen(buffer) - digitLen - 1;
+    snprintf((char*)firstDigit, digitLen + 1, buffer);
+
+    char rest_of_rx_buffer[50];
+    //snprintf(rest_of_rx_buffer, otherStringLen + 1, &space[1]);
+    strncpy(rest_of_rx_buffer, &space[1], otherStringLen + 1);
+
+    space = strstr(rest_of_rx_buffer, " ");
+    digitLen = space - rest_of_rx_buffer;
+    //otherStringLen = strlen(rest_of_rx_buffer) - digitLen - 1;
+    snprintf((char*)secondDigit, digitLen + 1, rest_of_rx_buffer);
+
+
+    cout << "first digit = " << firstDigit << endl;
+
+    cout << "snd digit = " << secondDigit << endl;
+*/
+
     std::cout<<buffer<<"       write"<<std::endl<<std::endl;
     BOOL iRet = WriteFile(hSerial, buffer, dwSize, &dwBytesWritten, NULL);
     // std::cout<<iRet<<std::endl;
     if (iRet){
     BOOL oRet = ReadFile(hSerial, str, dwSize, &dwBytesRead, NULL);
+    // std::cout<<oRet<<std::endl;
+    std::cout<<str<<"       read"<<std::endl<<std::endl;
+
+
+    memset(str, 0, sizeof(str));
+
+
+
+    oRet = ReadFile(hSerial, str, dwSize, &dwBytesRead, NULL);
     // std::cout<<oRet<<std::endl;
     std::cout<<str<<"       read"<<std::endl<<std::endl;
 
@@ -51,18 +86,15 @@ int send_to_stm2(HANDLE hSerial, std::string strr){
 
     memset(str, 0, sizeof(str));
 
-    /*oRet = ReadFile(hSerial, str, dwSize, &dwBytesRead, NULL);
-    // std::cout<<oRet<<std::endl;
-    std::cout<<str<<"       read"<<std::endl<<std::endl;
-
-
-    memset(str, 0, sizeof(str));*/
-
     }
     return 0;
 }
 
 int main(){
+
+
+
+
     std::string strr;
     //strr += '\r';
     //strr += '\n';
