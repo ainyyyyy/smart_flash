@@ -1,4 +1,4 @@
-# smart_flash
+# smart_flash (outdated)
 uart.cpp needs to be launched on PC (only windows)
 
 main.c needs to be loaded to stm32f103c8t6
